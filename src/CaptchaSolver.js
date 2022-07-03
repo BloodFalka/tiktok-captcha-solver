@@ -21,12 +21,14 @@ class CaptchaSolver {
       numAttempts: 3,
       startPosition: 25,
       positionIncrement: 5,
+      timeout: 5000,
+      verifyElement: '[id$="verify-ele"], #login_slide'
     }
   }
 
   get selectors() {
     return {
-      verifyElement: '[id$="verify-ele"], #login_slide',
+      verifyElement: this.options.verifyElement,
       verifyContainer: '.captcha_verify_container',
 
       puzzleImageWrapper: '.captcha_verify_img--wrapper',
@@ -40,16 +42,16 @@ class CaptchaSolver {
   }
 
   async solve(options) {
-    return this._watchForCaptchaAdd().then(
-      () => this.solveUntil(options),
+    return this._watchForCaptchaAdd(options).then(
+      () => this.solveUntil(),
       () => {
         /* ignore */
       }
     )
   }
 
-  async solveUntil(options) {
-    this.options = Object.assign(this.defaults, options)
+  async solveUntil() {
+    // this.options = Object.assign(this.defaults, options)
 
     let isNotSolved = true
 
@@ -185,10 +187,12 @@ class CaptchaSolver {
     ]
   }
 
-  async _watchForCaptchaAdd() {
+  async _watchForCaptchaAdd(options) {
+    this.options = Object.assign(this.defaults, options)
+
     try {
       await this.page.waitForSelector(this.selectors.verifyElement, {
-        timeout: 5000,
+        timeout: this.options.timeout,
       })
       await this.page.evaluate(this._waitForCaptchaDomAdd, this.selectors)
       const waitForCaptchaElements = this.captchaElements.map((el) =>
